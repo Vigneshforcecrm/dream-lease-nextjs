@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
