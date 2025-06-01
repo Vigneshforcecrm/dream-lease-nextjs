@@ -4,19 +4,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context
 ) {
   try {
-    const { id } = await params;
-
+    const id = context.params.id;
     if (!id) {
       return NextResponse.json(
         { error: 'Product ID is required' },
