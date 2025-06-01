@@ -56,7 +56,7 @@ export const Hero = () => {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-12 mt-20">
               <Button
                 onClick={scrollToProducts}
                 className="group bg-white text-slate-900 hover:bg-white/90 px-8 py-4 rounded-lg text-base font-semibold transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-xl border-0 h-auto"
@@ -69,7 +69,7 @@ export const Hero = () => {
               
               <Button
                 variant="ghost"
-                className="group text-white hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 rounded-lg text-base font-medium transition-all duration-300 h-auto"
+                className="group text-white hover:text-white hover:bg-white/10 backdrop-blur-sm border border-white/20 px-12 py-4 rounded-lg text-base font-medium transition-all duration-300 h-auto"
               >
                 <span className="flex items-center gap-3">
                   <Play className="w-4 h-4" />
