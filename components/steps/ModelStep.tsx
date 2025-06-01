@@ -32,7 +32,7 @@ export const ModelStep = () => {
         <div className="text-center space-y-4">
           <p className="text-slate-600">{productData.description}</p>
           <div className="text-3xl font-bold text-slate-900">
-            ${configuration.basePrice.toLocaleString()}
+          £{configuration.basePrice.toLocaleString()}
           </div>
           
           {/* Display available component groups as features */}

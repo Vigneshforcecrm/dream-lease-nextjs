@@ -8,10 +8,10 @@ export const Footer = () => {
         <div className="grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-slate-900 font-bold text-sm">DL</span>
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-slate-900 font-bold text-sm">Nexus</span>
               </div>
-              <span className="text-xl font-bold">Dreams Lease</span>
+              <span className="text-xl font-bold">Nexus Global Lease</span>
             </div>
             <p className="text-slate-400 text-sm">
               Premium vehicle leasing solutions for modern professionals and enterprises.
@@ -51,7 +51,7 @@ export const Footer = () => {
         
         <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-slate-400 text-sm">
-            © 2024 Dreams Lease. All rights reserved.
+            © 2024 Nexus Global Lease. All rights reserved.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Button variant="ghost" size="sm" className="text-slate-400 hover:text-white">

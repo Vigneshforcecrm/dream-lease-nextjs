@@ -62,7 +62,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           
           {/* Price badge - floating */}
           <div className="absolute top-6 right-6 bg-slate-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-bold transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-300">
-            ${product.price.toLocaleString()}
+          £{product.price.toLocaleString()}
           </div>
         </div>
         
@@ -93,7 +93,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
                 <>
                   <span className="text-sm font-medium text-slate-500 mb-1">Starting from</span>
                   <span className="text-xl font-bold text-slate-800">
-                    ${product.monthlyPrice.toLocaleString()}
+                  £{product.monthlyPrice.toLocaleString()}
                     <span className="text-sm font-normal text-slate-500 ml-1">/month</span>
                   </span>
                 </>

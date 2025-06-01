@@ -6,7 +6,7 @@ import { Check, FileText, CreditCard, Shield, Star,Loader2,X } from "lucide-reac
 import { useState } from "react";
 
 export const SummaryStep = () => {
-  const { configuration } = useConfiguration();
+  const { configuration,getColorPrice } = useConfiguration();
   const { productData, selectedAttributes, selectedComponents } = configuration;
   const { toast } = useToast();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -85,7 +85,7 @@ export const SummaryStep = () => {
             summary.push({
               category: record.label || record.name,
               item: selectedOption.displayValue,
-              price: 0, // Attributes typically don't have separate pricing in this structure
+              price: getColorPrice(selectedOption.displayValue) || 0, // Attributes typically don't have separate pricing in this structure
               isIncluded: selectedValue === record.defaultValue
             });
           }
@@ -146,7 +146,7 @@ export const SummaryStep = () => {
                   <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
                   <span className="font-semibold text-slate-800">Base Model - {productData?.name}</span>
                 </div>
-                <span className="text-lg font-bold text-slate-900">${configuration.basePrice.toLocaleString()}</span>
+                <span className="text-lg font-bold text-slate-900">£{configuration.basePrice.toLocaleString()}</span>
               </div>
               
               {/* Configuration Items */}
@@ -160,7 +160,7 @@ export const SummaryStep = () => {
                     {item.isIncluded 
                       ? <span className="text-slate-600">Included</span>
                       : item.price > 0 
-                        ? <span className="text-slate-900">+${item.price.toLocaleString()}</span>
+                        ? <span className="text-slate-900">+ £{item.price.toLocaleString()}</span>
                         : <span className="text-slate-600">Selected</span>
                     }
                   </span>
@@ -171,7 +171,7 @@ export const SummaryStep = () => {
               <div className="border-t border-slate-200 pt-6 mt-6">
                 <div className="flex justify-between items-center p-6 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 text-white">
                   <span className="text-xl font-semibold">Total Price</span>
-                  <span className="text-3xl font-bold">${configuration.totalPrice.toLocaleString()}</span>
+                  <span className="text-3xl font-bold">£{configuration.totalPrice.toLocaleString()}</span>
                 </div>
               </div>
             </CardContent>
@@ -230,7 +230,7 @@ export const SummaryStep = () => {
                   <div className="text-xs text-slate-500">3.5% APR</div>
                 </div>
                 <div className="text-4xl font-bold text-slate-900 mb-2">
-                  ${monthlyPayment}/mo
+                £{monthlyPayment}/mo
                 </div>
                 <div className="text-sm text-slate-500">Estimated payment</div>
               </div>

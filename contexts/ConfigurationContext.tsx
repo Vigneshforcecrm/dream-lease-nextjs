@@ -82,6 +82,7 @@ interface ConfigurationContextType {
   updateAttribute: (attributeName: string, value: string) => void;
   updateComponent: (groupId: string, componentId: string) => void;
   calculatePrice: () => void;
+  getColorPrice: (colorName: string) => number;
   loading: boolean;
   error: string | null;
 }
@@ -172,6 +173,21 @@ export const ConfigurationProvider = ({ children, productId }: ConfigurationProv
     fetchProductData();
   }, [productId]);
 
+   // Color pricing function
+   const getColorPrice = (colorName: string): number => {
+    const whiteVariants = [
+      'pearl white', 'pure white', 'solid white', 'arctic white', 
+      'glacier white', 'alpine white', 'crystal white', 'white'
+    ];
+    
+    const normalizedName = colorName.toLowerCase();
+    const isWhiteVariant = whiteVariants.some(variant => 
+      normalizedName.includes(variant) || variant.includes(normalizedName)
+    );
+    
+    return isWhiteVariant ? 0 : 1000;
+  };
+
   const updateConfiguration = (updates: Partial<Configuration>) => {
     setConfiguration(prev => ({ ...prev, ...updates }));
   };
@@ -200,6 +216,25 @@ export const ConfigurationProvider = ({ children, productId }: ConfigurationProv
     if (!configuration.productData) return;
     
     let totalPrice = configuration.basePrice;
+    // Add color pricing (attribute pricing)
+    const selectedColor = configuration.selectedAttributes['Colour'];
+    if (selectedColor && configuration.productData.attributeCategories) {
+      // Find the color attribute
+      const colorAttributes = configuration.productData.attributeCategories
+        ?.flatMap(cat => cat.records || [])
+        ?.find(record => record.name === 'Colour');
+      
+      if (colorAttributes?.attributePickList?.values) {
+        const selectedColorOption = colorAttributes.attributePickList.values.find(
+          color => color.code === selectedColor
+        );
+        
+        if (selectedColorOption) {
+          const colorPrice = getColorPrice(selectedColorOption.displayValue);
+          totalPrice += colorPrice;
+        }
+      }
+    }
     
     // Add component prices
     configuration.productData.productComponentGroups?.forEach(group => {
@@ -228,6 +263,7 @@ export const ConfigurationProvider = ({ children, productId }: ConfigurationProv
       updateAttribute,
       updateComponent,
       calculatePrice,
+      getColorPrice,
       loading,
       error
     }}>

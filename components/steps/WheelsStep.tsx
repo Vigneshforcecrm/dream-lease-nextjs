@@ -130,7 +130,7 @@ export const WheelsStep = () => {
                       {isIncluded ? (
                         <span className="text-slate-700">Included</span>
                       ) : (
-                        <span className="text-slate-900">+${price.toLocaleString()}</span>
+                        <span className="text-slate-900">+ £{price.toLocaleString()}</span>
                       )}
                     </div>
                     

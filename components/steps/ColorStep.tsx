@@ -104,6 +104,20 @@ const getColorHex = (colorName: string): string => {
   
   return colorMap['Default'];
 };
+// Helper function to get color price
+const getColorPrice = (colorName: string): number => {
+  const whiteVariants = [
+    'pearl white', 'pure white', 'solid white', 'arctic white', 
+    'glacier white', 'alpine white', 'crystal white', 'white'
+  ];
+  
+  const normalizedName = colorName.toLowerCase();
+  const isWhiteVariant = whiteVariants.some(variant => 
+    normalizedName.includes(variant) || variant.includes(normalizedName)
+  );
+  
+  return isWhiteVariant ? 0 : 1000;
+};
 
 // Helper function to determine if color is light or dark for contrast
 const isLightColor = (hex: string): boolean => {
@@ -120,8 +134,8 @@ export const ColorStep = () => {
 
   // Find color attributes
   const colorAttributes = productData?.attributeCategories
-    ?.find(cat => cat.code === 'LuxSedanAttributes')
-    ?.records?.find(record => record.name === 'Colour');
+    ?.flatMap(cat => cat.records || [])
+    ?.find(record => record.name === 'Colour');
 
   if (!colorAttributes?.attributePickList?.values) {
     return (
@@ -159,6 +173,8 @@ export const ColorStep = () => {
           const isSelected = selectedColor === color.code;
           const colorHex = getColorHex(color.displayValue);
           const isLight = isLightColor(colorHex);
+          const colorPrice = getColorPrice(color.displayValue);
+          const isIncluded = colorPrice === 0;
           
           return (
             <Card
@@ -215,7 +231,27 @@ export const ColorStep = () => {
                   <h3 className="font-bold text-slate-900 text-sm leading-tight group-hover:text-slate-800 transition-colors duration-300">
                     {color.displayValue}
                   </h3>
-                  <div className="flex items-center justify-center gap-2">
+                  {/* Price and Status */}
+                  <div className="space-y-1">
+                    <div className="text-sm font-bold">
+                      {isIncluded ? (
+                        <span className="text-slate-700">Included</span>
+                      ) : (
+                        <span className="text-slate-900">+ £{colorPrice.toLocaleString()}</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center justify-center gap-2">
+                      {/* <div 
+                        className="w-3 h-3 rounded-full border border-slate-200 shadow-sm"
+                        style={{ backgroundColor: colorHex }}
+                      ></div> */}
+                      <span className="text-xs text-slate-500 font-medium">
+                        {isIncluded ? 'Included' : 'Available'}
+                      </span>
+                    </div>
+                  </div>
+                  {/* <div className="flex items-center justify-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full border border-slate-200 shadow-sm"
                       style={{ backgroundColor: colorHex }}
@@ -223,7 +259,7 @@ export const ColorStep = () => {
                     <span className="text-xs text-slate-500 font-medium">
                       {isDefault ? 'Included' : 'Available'}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 
                 {/* Hover Glow Effect */}

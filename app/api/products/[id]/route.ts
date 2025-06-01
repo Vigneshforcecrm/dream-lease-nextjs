@@ -6,10 +6,10 @@ import axios from 'axios';
 
 export async function GET(
   request: NextRequest,
-  context
+  context: { params: { id: string } }
 ) {
   try {
-    const id = context.params.id;
+    const id = await context.params.id;
     if (!id) {
       return NextResponse.json(
         { error: 'Product ID is required' },

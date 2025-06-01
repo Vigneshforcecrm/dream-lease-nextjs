@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
 
 export const PricingSidebar = () => {
-  const { configuration } = useConfiguration();
+  const { configuration, getColorPrice } = useConfiguration();
   const { productData, selectedAttributes, selectedComponents } = configuration;
 
   const monthlyPayment = Math.round(configuration.totalPrice / 36);
@@ -47,6 +47,7 @@ export const PricingSidebar = () => {
     const details: Array<{
       name: string;
       value: string;
+      price: number;
       isDefault: boolean;
     }> = [];
 
@@ -55,15 +56,28 @@ export const PricingSidebar = () => {
         const selectedValue = selectedAttributes[record.name];
         if (selectedValue) {
           const isDefault = selectedValue === record.defaultValue;
+          let price = 0;
+          let displayValue = selectedValue;
+          // Special handling for color pricing
+          if (record.name === 'Colour' && record.attributePickList?.values) {
+            const selectedColorOption = record.attributePickList.values.find(
+              color => color.code === selectedValue
+            );
+            if (selectedColorOption) {
+              price = getColorPrice(selectedColorOption.displayValue);
+              displayValue = selectedColorOption.displayValue;
+            }
+          }
           details.push({
             name: record.label || record.name,
-            value: selectedValue,
+            value: displayValue,
+            price,
             isDefault
           });
         }
       });
     });
-
+    console.log('details:' , JSON.stringify(details));
     return details;
   };
 
@@ -93,7 +107,7 @@ export const PricingSidebar = () => {
               <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-3"></div>
               <span className="font-medium text-slate-700">Base Model</span>
             </div>
-            <span className="text-lg font-bold text-slate-900">${configuration.basePrice.toLocaleString()}</span>
+            <span className="text-lg font-bold text-slate-900">£{configuration.basePrice.toLocaleString()}</span>
           </div>
           
           {/* Selected Attributes */}
@@ -105,7 +119,7 @@ export const PricingSidebar = () => {
               {attributeDetails.map((attr, index) => (
                 <div key={index} className="flex justify-between items-center py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors duration-200">
                   <span className="text-sm text-slate-600 font-medium">{attr.name}</span>
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     {attr.isDefault && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 mr-2">
                         Default
@@ -114,7 +128,18 @@ export const PricingSidebar = () => {
                     <span className="text-sm text-slate-700 font-medium">
                       {attr.isDefault ? 'Included' : attr.value}
                     </span>
-                  </div>
+                  </div> */}
+                  <div className="flex items-center">
+                  {attr.price === 0 ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200">
+                      ✓ Included
+                    </span>
+                  ) : (
+                    <span className="text-sm font-bold text-slate-900 bg-gradient-to-r from-blue-50 to-purple-50 px-3 py-1 rounded-full border border-blue-200">
+                      + £{attr.price.toLocaleString()}
+                    </span>
+                  )}
+                </div>
                 </div>
               ))}
             </div>
@@ -136,7 +161,7 @@ export const PricingSidebar = () => {
                       </span>
                     ) : (
                       <span className="text-sm font-bold text-slate-900 bg-gradient-to-r from-blue-50 to-purple-50 px-3 py-1 rounded-full border border-blue-200">
-                        +${comp.price.toLocaleString()}
+                        + £{comp.price.toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -160,7 +185,7 @@ export const PricingSidebar = () => {
             <div className="relative z-10">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-semibold text-slate-200">Total Price</span>
-                <span className="text-3xl font-bold text-white">${configuration.totalPrice.toLocaleString()}</span>
+                <span className="text-3xl font-bold text-white">£{configuration.totalPrice.toLocaleString()}</span>
               </div>
               
               {/* Monthly Payment Section */}
@@ -168,7 +193,7 @@ export const PricingSidebar = () => {
                 <div className="text-center">
                   <div className="text-sm text-slate-300 mb-1">Estimated Monthly Payment</div>
                   <div className="text-2xl font-bold text-white mb-1">
-                    ${monthlyPayment}
+                  £{monthlyPayment}
                     <span className="text-base font-normal text-slate-300">/mo</span>
                   </div>
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm">
