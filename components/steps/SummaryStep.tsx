@@ -4,6 +4,7 @@ import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { useToast } from "@/hooks/use-toast";
 import { Check, FileText, CreditCard, Shield, Star,Loader2,X } from "lucide-react";
 import { useState } from "react";
+import {decode} from 'he'
 
 export const SummaryStep = () => {
   const { configuration,getColorPrice } = useConfiguration();
@@ -154,7 +155,7 @@ export const SummaryStep = () => {
                 <div key={index} className="flex justify-between items-center py-3 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
-                    <span className="text-slate-700 font-medium">{item.category}: {item.item}</span>
+                    <span className="text-slate-700 font-medium">{decode(item.category)}: {decode(item.item)}</span>
                   </div>
                   <span className="font-semibold">
                     {item.isIncluded 
@@ -197,10 +198,10 @@ export const SummaryStep = () => {
                   
                   return (
                     <div key={group.id} className="border-l-4 border-blue-500 pl-6 py-3 rounded-r-lg bg-gradient-to-r from-blue-50/50 to-transparent">
-                      <div className="font-bold text-slate-900 text-lg">{group.name}</div>
-                      <div className="text-slate-700 font-medium">{component.name}</div>
+                      <div className="font-bold text-slate-900 text-lg">{decode(group.name)}</div>
+                      <div className="text-slate-700 font-medium">{decode(component.name)}</div>
                       {component.description && (
-                        <div className="text-sm text-slate-600 mt-2 leading-relaxed">{component.description}</div>
+                        <div className="text-sm text-slate-600 mt-2 leading-relaxed">{decode(component.description)}</div>
                       )}
                     </div>
                   );

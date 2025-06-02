@@ -3,6 +3,7 @@
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { useRouter } from "next/navigation";
+import { decode } from "he";
 
 interface Product {
   id: string;
@@ -73,10 +74,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <h3 className="text-2xl md:text-3xl font-bold text-slate-800 mb-3 leading-tight group-hover:text-slate-900 transition-colors duration-300">
-                  {product.name}
+                  {decode(product.name)}
                 </h3>
                 <p className="text-slate-600 font-light leading-relaxed text-base group-hover:text-slate-700 transition-colors duration-300">
-                  {product.description}
+                  {decode(product.description)}
                 </p>
               </div>
             </div>

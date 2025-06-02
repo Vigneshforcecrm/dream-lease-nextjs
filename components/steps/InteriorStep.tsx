@@ -102,7 +102,7 @@ export const InteriorStep = () => {
                 <div className="p-6 space-y-4">
                   {/* Interior Name */}
                   <h3 className="text-xl font-bold text-slate-900 group-hover:text-slate-800 transition-colors duration-300">
-                    {interior.name}
+                    {decode(interior.name)}
                   </h3>
                   
                   {/* Description */}

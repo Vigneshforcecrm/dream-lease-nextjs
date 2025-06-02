@@ -17,7 +17,7 @@ export const ModelStep = () => {
       <div className="max-w-3xl mx-auto">
         {/* Model Name Before Image */}
         <div className="text-center mb-6">
-          <h3 className="text-3xl font-bold text-slate-900">{productData.name}</h3>
+          <h3 className="text-3xl font-bold text-slate-900">{decode(productData.name)}</h3>
         </div>
         {productData.displayUrl && (
           <div className="aspect-video mb-6 rounded-xl overflow-hidden shadow-lg">
@@ -32,7 +32,7 @@ export const ModelStep = () => {
         )}
         
         <div className="text-center space-y-4">
-          <p className="text-slate-600">{productData.description}</p>
+          <p className="text-slate-600">{decode(productData.description)}</p>
           <div className="text-3xl font-bold text-slate-900">
           £{configuration.basePrice.toLocaleString()}
           </div>
@@ -43,7 +43,7 @@ export const ModelStep = () => {
               {productData.productComponentGroups.slice(0, 3).map((group) => (
                 <div key={group.id} className="bg-slate-50 p-4 rounded-lg">
                   <span className="text-sm font-medium text-slate-700">
-                    Configurable {group.name}
+                    Configurable {decode(group.name)}
                   </span>
                   <p className="text-xs text-slate-500 mt-1">
                     {group.description}

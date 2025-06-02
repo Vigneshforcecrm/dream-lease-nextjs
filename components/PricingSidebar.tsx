@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useConfiguration } from "@/contexts/ConfigurationContext";
+import { decode } from 'he';
 
 export const PricingSidebar = () => {
   const { configuration, getColorPrice } = useConfiguration();
@@ -77,7 +78,6 @@ export const PricingSidebar = () => {
         }
       });
     });
-    console.log('details:' , JSON.stringify(details));
     return details;
   };
 
@@ -153,7 +153,7 @@ export const PricingSidebar = () => {
               </h4>
               {componentDetails.map((comp, index) => (
                 <div key={index} className="flex justify-between items-center py-3 px-4 rounded-lg bg-gradient-to-r from-slate-50/50 to-transparent border border-slate-200/50 hover:border-slate-300/50 transition-all duration-200">
-                  <span className="text-sm text-slate-600 font-medium flex-1 mr-4">{comp.name}</span>
+                  <span className="text-sm text-slate-600 font-medium flex-1 mr-4">{decode(comp.name)}</span>
                   <div className="flex items-center">
                     {comp.isIncluded ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200">

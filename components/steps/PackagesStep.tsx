@@ -59,7 +59,7 @@ export const PackagesStep = () => {
       {/* Header Section */}
       <div className="text-center">
         <h2 className="text-3xl font-bold text-slate-900 mb-3">Select Your Package</h2>
-        <p className="text-lg text-slate-600 leading-relaxed">{packageGroup.description}</p>
+        <p className="text-lg text-slate-600 leading-relaxed">{decode(packageGroup.description)}</p>
         {packageGroup.maxBundleComponents === 1 && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 mt-4">
             <Check className="w-4 h-4 text-blue-600" />
