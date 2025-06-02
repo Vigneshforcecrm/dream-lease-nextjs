@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ProductCard } from "./ProductCard";
+import { decode } from 'he';
 
 interface SalesforceProduct {
   id: string;
@@ -36,14 +37,13 @@ const transformSalesforceProduct = (sfProduct: SalesforceProduct, index: number)
   
   // Calculate monthly price (assuming 60 month financing at 5% APR as example)
   const monthlyPrice = defaultPrice > 0 ? Math.round((defaultPrice * 0.018871) * 100) / 100 : 0;
-
   return {
     id: sfProduct.id,
     name: sfProduct.name,
     description: sfProduct.description || "Premium quality vehicle",
     price: defaultPrice,
     monthlyPrice: monthlyPrice,
-    image: sfProduct.displayUrl || defaultImages[index % defaultImages.length],
+    image: sfProduct?.displayUrl ? decode(sfProduct.displayUrl) : defaultImages[index % defaultImages.length],
     type: sfProduct.productCode?.toLowerCase() || "vehicle"
   };
 };
@@ -71,11 +71,12 @@ export const ProductShowcase = () => {
         }
 
         const data = await response.json();
+        console.log('data ---------->', data);
  
         const dreamLeaseProducts = data.result?.filter((product: SalesforceProduct) => 
           product.categories?.some(category => category.name === "Dream Lease")
         ) || [];
-
+        console.log('dreamLeaseProducts ---------->', dreamLeaseProducts);
         const transformedProducts = dreamLeaseProducts.map((product: SalesforceProduct, index: number) => 
           transformSalesforceProduct(product, index)
         );

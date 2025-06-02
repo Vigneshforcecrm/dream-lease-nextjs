@@ -2,6 +2,7 @@ import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, Settings } from "lucide-react";
+import { decode } from 'he';
 
 export const WheelsStep = () => {
   const { configuration, updateComponent } = useConfiguration();
@@ -94,9 +95,10 @@ export const WheelsStep = () => {
                 )}
                 
                 {/* Wheel Image */}
+                {wheel.displayUrl && (
                 <div className="aspect-square overflow-hidden relative bg-gradient-to-br from-slate-50 to-gray-100">
                   <img
-                    src={wheel.displayUrl || "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop"}
+                    src={decode(wheel.displayUrl)}
                     alt={wheel.name}
                     onError={handleImageError}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -111,6 +113,7 @@ export const WheelsStep = () => {
                     <div className="absolute inset-0 bg-blue-500/10"></div>
                   )}
                 </div>
+                )}
                 
                 {/* Content Section */}
                 <div className="p-6 space-y-4">

@@ -2,6 +2,7 @@ import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, ImageIcon } from "lucide-react";
+import { decode } from 'he';
 
 export const InteriorStep = () => {
   const { configuration, updateComponent } = useConfiguration();
@@ -78,9 +79,10 @@ export const InteriorStep = () => {
                 )}
                 
                 {/* Interior Image */}
+                {interior.displayUrl && (
                 <div className="aspect-[4/3] overflow-hidden relative">
                   <img
-                    src={interior.displayUrl || "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop"}
+                    src={decode(interior.displayUrl)}
                     alt={interior.name}
                     onError={handleImageError}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
@@ -95,7 +97,7 @@ export const InteriorStep = () => {
                     <div className="absolute inset-0 bg-blue-500/10"></div>
                   )}
                 </div>
-                
+                )}
                 {/* Content Section */}
                 <div className="p-6 space-y-4">
                   {/* Interior Name */}

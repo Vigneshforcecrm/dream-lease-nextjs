@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Check, Package } from "lucide-react";
+import { decode } from 'he';
 
 export const PackagesStep = () => {
   const { configuration, updateComponent } = useConfiguration();
@@ -119,10 +120,10 @@ export const PackagesStep = () => {
                 </div>
                 
                 {/* Package Image */}
-                {pkg.displayUrl && (
+                {pkg?.displayUrl && (
                   <div className="aspect-[4/3] overflow-hidden relative">
                     <img
-                      src={pkg.displayUrl}
+                      src={decode(pkg?.displayUrl)}
                       alt={pkg.name}
                       onError={handleImageError}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
