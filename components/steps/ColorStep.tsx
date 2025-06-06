@@ -11,6 +11,7 @@ declare global {
     player: any;
   }
 }
+
 // Comprehensive color mapping for automotive colors
 const getColorHex = (colorName: string): string => {
   const colorMap: { [key: string]: string } = {
@@ -112,6 +113,7 @@ const getColorHex = (colorName: string): string => {
   
   return colorMap['Default'];
 };
+
 // Helper function to get color price
 const getColorPrice = (colorName: string): number => {
   const whiteVariants = [
@@ -143,73 +145,132 @@ export const ColorStep = () => {
   const [threekitPlayer, setThreekitPlayer] = useState<any>(null);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
 
-    // Initialize Threekit Player
-    useEffect(() => {
-      const initializeThreekit = async () => {
-        if (!playerRef.current || threekitPlayer) return;
-  
-        try {
-          // Load Threekit script if not already loaded
-          if (!window.threekitPlayer) {
-            const script = document.createElement('script');
-            script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
-            script.async = true;
-            document.head.appendChild(script);
-            
-            await new Promise((resolve, reject) => {
-              script.onload = resolve;
-              script.onerror = reject;
-            });
-          }
-  
-          // Initialize player
-          const player = await window.threekitPlayer({
-            authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
-            el: playerRef.current,
-            assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
-            initialConfiguration: {
-              // Set initial color if selected
-              ...(selectedAttributes['Colour'] && {
-                "Colour": selectedAttributes['Colour']
-              })
-            },
-            publishStage: "published",
-            showConfigurator: false, // Hide default configurator since we have our own UI
-            showAR: true,
-          });
-  
-          setThreekitPlayer(player);
-          window.player = player;
-          setIsPlayerLoading(false);
-        } catch (error) {
-          console.error('Failed to initialize Threekit player:', error);
-          setIsPlayerLoading(false);
-        }
-      };
-  
-      initializeThreekit();
-    }, [selectedAttributes]);
-  
-    // Update Threekit when color changes
-    useEffect(() => {
-      const updateThreekitColor = async () => {
-        if (!threekitPlayer || !selectedAttributes['Colour']) return;
-  
-        try {
-          // Get the configurator from the player
-          const configurator = await threekitPlayer.getConfigurator();
+  // Initialize Threekit Player
+  useEffect(() => {
+    const initializeThreekit = async () => {
+      if (!playerRef.current || threekitPlayer) return;
+
+      try {
+        // Load Threekit script if not already loaded
+        if (!window.threekitPlayer) {
+          const script = document.createElement('script');
+          script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
           
-          // Update the color configuration
-          await configurator.setConfiguration({
-            Colour: selectedAttributes['Colour']
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            // Add timeout to prevent hanging
+            setTimeout(reject, 10000);
           });
-        } catch (error) {
-          console.error('Failed to update Threekit color:', error);
         }
-      };
-  
-      updateThreekitColor();
-    }, [selectedAttributes['Colour'], threekitPlayer]);
+
+        // Add a small delay to ensure script is fully loaded
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Initialize player with additional CORS-friendly options
+        const player = await window.threekitPlayer({
+          authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
+          el: playerRef.current,
+          assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
+          initialConfiguration: {
+            // Set initial color if selected
+            ...(selectedAttributes['Colour'] && {
+              "Colour": selectedAttributes['Colour']
+            })
+          },
+          publishStage: "published",
+          showConfigurator: false, // Hide default configurator since we have our own UI
+          showAR: true,
+          // Additional options that might help with CORS
+          cache: false,
+          // Use domain instead of preview subdomain if available
+          domain: "https://threekit.com", // Try main domain
+          // Alternative: use your own domain if you have CORS configured
+          // domain: "https://your-domain.com"
+        });
+
+        setThreekitPlayer(player);
+        window.player = player;
+        setIsPlayerLoading(false);
+      } catch (error) {
+        console.error('Failed to initialize Threekit player:', error);
+        setIsPlayerLoading(false);
+        
+        // Show user-friendly error message
+        if (playerRef.current) {
+          playerRef.current.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full bg-slate-100 text-center p-8">
+              <div class="text-slate-400 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-slate-700 mb-2">3D Viewer Unavailable</h3>
+              <p class="text-slate-500 text-sm max-w-md">
+                The 3D preview is temporarily unavailable. Please continue with your color selection below.
+              </p>
+            </div>
+          `;
+        }
+      }
+    };
+
+    // Add a small delay before initializing to ensure DOM is ready
+    const timer = setTimeout(initializeThreekit, 100);
+    return () => clearTimeout(timer);
+  }, []); // Remove selectedAttributes dependency to prevent re-initialization
+
+  // Update Threekit when color changes
+  useEffect(() => {
+    const updateThreekitColor = async () => {
+      if (!threekitPlayer || !selectedAttributes['Colour']) return;
+
+      try {
+        // Get the configurator from the player
+        const configurator = await threekitPlayer.getConfigurator();
+        
+        // Update the color configuration
+        await configurator.setConfiguration({
+          Colour: selectedAttributes['Colour']
+        });
+      } catch (error) {
+        console.error('Failed to update Threekit color:', error);
+        // Optionally show a toast notification to user about the update failure
+      }
+    };
+
+    updateThreekitColor();
+  }, [selectedAttributes['Colour'], threekitPlayer]);
+
+  // Alternative: Iframe-based approach for CORS issues
+  const renderThreekitIframe = () => {
+    const baseUrl = "https://preview.threekit.com/app";
+    const params = new URLSearchParams({
+      assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
+      authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
+      publishStage: "published",
+      showConfigurator: "false",
+      showAR: "true",
+      ...(selectedAttributes['Colour'] && {
+        'config[Colour]': selectedAttributes['Colour']
+      })
+    });
+
+    return (
+      <iframe
+        src={`${baseUrl}?${params.toString()}`}
+        className="w-full h-full border-0"
+        allow="camera; xr-spatial-tracking"
+        title="3D Product Viewer"
+        onError={() => {
+          console.log("Iframe failed to load, showing fallback");
+        }}
+      />
+    );
+  };
 
   // Find color attributes
   const colorAttributes = productData?.attributeCategories
@@ -259,12 +320,49 @@ export const ColorStep = () => {
               </div>
             )}
             
-            {/* Threekit Player Container */}
+            {/* Primary Threekit Player Container */}
             <div 
               ref={playerRef}
               className="w-full aspect-video min-h-[500px] bg-slate-100 rounded-lg"
               style={{ minHeight: '500px' }}
             />
+            
+            {/* Fallback: Show iframe if main player fails */}
+            {!isPlayerLoading && !threekitPlayer && (
+              <div className="absolute inset-0 rounded-lg overflow-hidden">
+                {renderThreekitIframe()}
+              </div>
+            )}
+            
+            {/* 3D Viewer Label */}
+            <div className="absolute top-4 left-4 z-20">
+              <Badge className="bg-white/90 text-slate-700 shadow-lg border-0 backdrop-blur-sm">
+                360° Preview
+              </Badge>
+            </div>
+
+            {/* Retry Button for failed loads */}
+            {!isPlayerLoading && !threekitPlayer && (
+              <div className="absolute bottom-4 right-4 z-20">
+                <button
+                  onClick={() => {
+                    setIsPlayerLoading(true);
+                    setThreekitPlayer(null);
+                    // Trigger re-initialization
+                    setTimeout(() => {
+                      const timer = setTimeout(() => {
+                        const initEvent = new Event('threekitRetry');
+                        window.dispatchEvent(initEvent);
+                      }, 100);
+                      return () => clearTimeout(timer);
+                    }, 100);
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg transition-colors duration-200 text-sm font-medium"
+                >
+                  Retry 3D Load
+                </button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
