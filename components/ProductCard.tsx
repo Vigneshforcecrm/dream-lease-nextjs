@@ -110,7 +110,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             <div className="relative">
               <Button 
                 onClick={handleConfigure}
-                className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-purple-700 hover:to-purple-800 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border-0 overflow-hidden group/btn"
+                className="relative cursor-pointer bg-gradient-to-r from-blue-600 via-blue-700 to-purple-600 hover:from-blue-700 hover:via-purple-700 hover:to-purple-800 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border-0 overflow-hidden group/btn"
                 aria-label={`Configure ${product.name}`}
               >
                 {/* Button glow effect */}
