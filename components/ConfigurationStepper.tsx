@@ -16,31 +16,32 @@ import { Loader2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Dynamic steps based on product data
 const getStepsForProduct = (productData: any) => {
+  console.log('productData ----->', productData)
   if (!productData) return [];
   
   const steps = [
-    { id: 'model', label: 'Model', component: ModelStep }
+    { id: 'model', label: 'Model', component: ModelStep, sequence: 1}
   ];
   
   // Add attribute steps (like color)
   productData.attributeCategories?.forEach((category: any) => {
-    steps.push({ id: 'color', label: 'Color', component: ColorStep });
+    steps.push({ id: 'color', label: 'Color',sequence: category?.sequence || 2 , component: ColorStep });
   });
   
   // Add component group steps
   productData.productComponentGroups?.forEach((group: any) => {
     if (group.name === 'Wheels') {
-      steps.push({ id: 'wheels', label: 'Wheels', component: WheelsStep });
+      steps.push({ id: 'wheels', label: 'Wheels', sequence: group?.sequence || 3, component: WheelsStep });
     } else if (group.name === 'Interior') {
-      steps.push({ id: 'interior', label: 'Interior', component: InteriorStep });
+      steps.push({ id: 'interior', label: 'Interior', sequence: group?.sequence || 4, component: InteriorStep });
     } else if (group.name === 'Package') {
-      steps.push({ id: 'packages', label: 'Packages', component: PackagesStep });
+      steps.push({ id: 'packages', label: 'Packages', sequence: group?.sequence || 5, component: PackagesStep });
     }
   });
   
-  steps.push({ id: 'summary', label: 'Summary', component: SummaryStep });
+  steps.push({ id: 'summary', label: 'Summary', sequence: 999, component: SummaryStep });
   
-  return steps;
+  return steps.sort((a, b) => a.sequence - b.sequence);
 };
 
 export const ConfigurationStepper = () => {

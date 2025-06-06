@@ -51,7 +51,7 @@ export const InteriorStep = () => {
         {interiorGroup.components.map((interior) => {
           const isSelected = selectedInteriorId === interior.id;
           const price = interior.prices.find(p => p.isDefault)?.price || 0;
-          const isIncluded = interior.productRelatedComponent?.doesBundlePriceIncludeChild || price === 0;
+          const isIncluded = interior.productRelatedComponent?.doesBundlePriceIncludeChild;
           
           return (
             <Card

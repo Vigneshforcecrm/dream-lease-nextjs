@@ -67,7 +67,7 @@ export const WheelsStep = () => {
         {wheelsGroup.components.map((wheel) => {
           const isSelected = selectedWheelId === wheel.id;
           const price = wheel.prices.find(p => p.isDefault)?.price || 0;
-          const isIncluded = wheel.productRelatedComponent?.doesBundlePriceIncludeChild || price === 0;
+          const isIncluded = wheel.productRelatedComponent?.doesBundlePriceIncludeChild;
           
           return (
             <Card
