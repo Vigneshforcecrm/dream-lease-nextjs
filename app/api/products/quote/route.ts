@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
     const today = new Date();
 
     const productNames = product_data?.productData.name;
-    console.log('product_data ------>', product_data);
-    const url = `${apiEndpoint}/services/data/v${parseFloat(apiVersion).toFixed(1)}/commerce/sales-orders/actions/place`;
+    const url = `${apiEndpoint}/services/data/v${parseFloat(apiVersion).toFixed(1)}/commerce/quotes/actions/place`;
     const rawPayload = {
       pricingPref: "System",
       configurationInput: "RunAndAllowErrors",
@@ -67,21 +66,33 @@ export async function POST(request: NextRequest) {
         addDefaultConfiguration: false,
       },
       graph: {
-        graphId: "graphId",
+        graphId: "1",
         records: [
           {
-            referenceId: "refOrder",
+            referenceId: "refQuote",
             record: {
               attributes: {
-                type: "Order",
+                type: "Quote",
                 method: "POST",
               },
               Name: `${user_record.Name}-${productNames}`,
+              Pricebook2Id: pricebookId,
+              description: product_data?.description || '',
+              Source__c: "WebStore",
+              ContactId: user_record.ContactId,
               BillToContactId: user_record.ContactId,
-              AccountId: user_record.AccountId,
-              EffectiveDate: today,
-              Pricebook2Id: product_data.productData.prices[0].priceBookId,
-              //TotalAmount: product_data.totalPrice
+              AccountId__c: user_record.AccountId,
+            },
+          },
+          {
+            referenceId: "refQuoteAction",
+            record: {
+              attributes: {
+                type: "QuoteAction",
+                method: "POST",
+              },
+              QuoteId: "@{refQuote.id}",
+              Type: "Add",
             },
           },
           {
@@ -91,28 +102,39 @@ export async function POST(request: NextRequest) {
                 type: "AppUsageAssignment",
                 method: "POST",
               },
-              RecordId: "@{refOrder.id}",
+              RecordId: "@{refQuote.id}",
               AppUsageType: "RevenueLifecycleManagement",
             },
           },
           {
-            referenceId: "refOrderItem",
+            referenceId: `refOrderItem1`,
             record: {
               attributes: {
-                type: "OrderItem",
-                method: "POST"
+                type: "QuoteLineItem",
+                method: "POST",
               },
-              OrderId: "@{refOrder.id}",
+              QuoteId: "@{refQuote.id}",
+              QuoteActionId: "@{refQuoteAction.id}",
               Quantity: 1,
-              PricebookEntryId: product_data.productData.prices[0].priceBookEntryId,
+              priceBookEntryId: product_data.productData.prices[0].priceBookEntryId,
               Product2Id: product_data.productId,
               UnitPrice: product_data.totalPrice,
-              Description: product_data.productData.description,
-            }
-          }
+              PeriodBoundary: "Anniversary",
+              ServiceDate: today.toISOString().split('T')[0],
+            },
+          },
         ],
       },
     };
+    
+
+    console.log('Sending order request to Salesforce:', {
+      url,
+      userName: user_record.Name,
+      productCount: 1,
+      contactId: user_record.ContactId,
+      accountId: user_record.AccountId,
+    });
 
     const response = await axios.post(url, rawPayload, {
       headers: {
@@ -121,9 +143,8 @@ export async function POST(request: NextRequest) {
       },
       timeout: 30000, // 30 second timeout
     });
-    console.log('Order -------->', response)
 
-    if (response.status === 201 || response.status === 200) {
+    if (response.status === 200) {
       console.log('Order placed successfully:', response.data);
       return NextResponse.json({
         success: true,

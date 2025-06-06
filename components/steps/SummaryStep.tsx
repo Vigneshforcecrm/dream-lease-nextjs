@@ -13,7 +13,9 @@ export const SummaryStep = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [orderId, setOrderId] = useState('');
-  
+  const [ordernewId, setOrdernewId] = useState('');
+  const [showSuccessOrderModal, setShowSuccessOrderModal] = useState(false);
+  const [isPlacingOrdernew, setIsPlacingOrdernew] = useState(false);
   // Financing state
   const [selectedTerm, setSelectedTerm] = useState(36);
   const [downPayment, setDownPayment] = useState(Math.round(configuration.totalPrice * 0.2)); // 20% default
@@ -34,11 +36,58 @@ export const SummaryStep = () => {
   const monthlyRate = selectedTermData?.apr / 100 / 12;
   const monthlyPayment = Math.round((financedAmount * monthlyRate * Math.pow(1 + monthlyRate, selectedTerm)) / (Math.pow(1 + monthlyRate, selectedTerm) - 1));
 
-  const handleGetQuote = () => {
+  const handleGetQuote = async() => {
     toast({
       title: "Quote Generated!",
       description: "Your personalized quote has been prepared. A specialist will contact you soon.",
     });
+    setIsPlacingOrdernew(true);
+        
+    try {
+      console.log("Complete Configuration Object:", configuration);
+
+      const response = await fetch('/api/products/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...configuration,
+          financing: {
+            leaseTerm: selectedTerm,
+            apr: selectedTermData.apr,
+            downPayment,
+            monthlyPayment
+          }
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create Quote');
+      }
+      const orderIdFromResponse = result.data.quoteId;
+      setOrdernewId(orderIdFromResponse);
+      setShowSuccessOrderModal(true);
+
+      toast({
+        title: "Quote Placed Successfully!",
+        description: "Thank you. We'll begin processing your dream car configuration.",
+      });
+
+      console.log('Quote placed successfully:', result);
+
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        title: "Quote Failed",
+        description: error instanceof Error ? error.message : "Failed to place Quote. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPlacingOrdernew(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -66,9 +115,10 @@ export const SummaryStep = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to place order');
+        throw new Error(result.errors || 'Failed to place order');
       }
-      const orderIdFromResponse = result.data.quoteId;
+      console.log('result', result)
+      const orderIdFromResponse = result.data.orderId;
       setOrderId(orderIdFromResponse);
       setShowSuccessModal(true);
 
@@ -349,9 +399,19 @@ export const SummaryStep = () => {
               size="lg" 
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 md:py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-0 text-sm md:text-base"
               onClick={handleGetQuote}
+              disabled={isPlacingOrdernew}
             >
-              <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              Get Personalized Quote
+              {isPlacingOrdernew ? (
+                <>
+                  <Loader2 className="w-4 h-4 md:w-5 md:h-5 mr-2 animate-spin" />
+                  Generating Quote...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                  Get Personalized Quote
+                </>
+              )}
             </Button>
             
             <Button 
@@ -404,13 +464,13 @@ export const SummaryStep = () => {
       </div>
 
       {/* Success Modal */}
-      {showSuccessModal && (
+      {(showSuccessModal || showSuccessOrderModal) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 transform animate-in zoom-in-95 duration-300">
             {/* Close Button */}
             <div className="flex justify-end p-4">
               <button
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => showSuccessModal? setShowSuccessModal(false) : setShowSuccessOrderModal(false) }
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200"
               >
                 <X className="w-4 h-4 text-slate-600" />
@@ -429,24 +489,24 @@ export const SummaryStep = () => {
               
               {/* Success Message */}
               <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-2">
-                Order Placed Successfully!
+                {showSuccessModal ? 'Order' : 'Quote'} Created Successfully!
               </h3>
               
               <p className="text-slate-600 mb-6 leading-relaxed text-sm md:text-base">
-                Thank you for your order. We'll begin processing your dream car configuration.
+                Thank you. We'll begin processing your dream car configuration.
               </p>
               
               {/* Order ID */}
               <div className="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-4 mb-6 border border-slate-100">
-                <div className="text-sm text-slate-500 mb-1">Order ID</div>
+                <div className="text-sm text-slate-500 mb-1">{showSuccessModal ? 'Order ID' : 'Quote ID'}</div>
                 <div className="text-base md:text-lg font-bold text-slate-900 font-mono">
-                  {orderId}
+                  {showSuccessModal ? orderId : ordernewId }
                 </div>
               </div>
               
               {/* Action Button */}
               <Button
-                onClick={() => setShowSuccessModal(false)}
+                onClick={() => showSuccessModal ? setShowSuccessModal(false) : setShowSuccessOrderModal(false) }
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Continue
