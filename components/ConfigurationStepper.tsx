@@ -22,8 +22,7 @@ const getStepsForProduct = (productData: any) => {
   const steps = [
     { id: 'model', label: 'Model', component: ModelStep, sequence: 1}
   ];
-  
-  // Add attribute steps (like color)
+
   productData.attributeCategories?.forEach((category: any) => {
     steps.push({ id: 'color', label: 'Color',sequence: category?.sequence || 2 , component: ColorStep });
   });
@@ -89,7 +88,6 @@ export const ConfigurationStepper = () => {
     );
   }
 
-  // Enhanced Error State
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 flex items-center justify-center">
@@ -115,7 +113,6 @@ export const ConfigurationStepper = () => {
     );
   }
 
-  // Enhanced No Steps State
   if (steps.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-gray-50 flex items-center justify-center">

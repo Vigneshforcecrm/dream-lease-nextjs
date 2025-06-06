@@ -25,9 +25,7 @@ export const PackagesStep = () => {
       </div>
     );
   }
-     // Sort package components by sequence value (ascending order)
   const sortedPackageComponents = [...packageGroup.components].sort((a, b) => {
-    // Handle cases where sequence might be undefined or null
     const seqA = a.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
     const seqB = b.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
     return seqA - seqB;
@@ -36,29 +34,23 @@ export const PackagesStep = () => {
   const selectedPackageId = selectedComponents[packageGroup.id];
 
   const handlePackageSelect = (componentId: string) => {
-    // For packages, we might want to allow only one selection based on maxBundleComponents
     if (packageGroup.maxBundleComponents === 1) {
-      // Single selection
       updateComponent(packageGroup.id, componentId);
     } else {
-      // Multiple selections would require different logic
       updateComponent(packageGroup.id, componentId);
     }
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Fallback image for packages
     e.currentTarget.src = "https://images.unsplash.com/photo-1549399735-cae2452eba7a?w=800&h=600&fit=crop";
   };
 
-  // Parse features from description
   const parseFeatures = (description: string): string[] => {
-    // Split by common delimiters and clean up
     return description
       .split(/[,;.]/)
       .map(feature => feature.trim())
       .filter(feature => feature.length > 0)
-      .slice(0, 4); // Limit to 4 features for display
+      .slice(0, 4); 
   };
 
   return (
@@ -104,7 +96,6 @@ export const PackagesStep = () => {
                 {/* Selection Indicator */}
                 <div className="absolute top-4 left-4 z-10">
                   {packageGroup.maxBundleComponents === 1 ? (
-                    // Radio button behavior for single selection
                     <div className={`w-8 h-8 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
                       isSelected 
                         ? 'bg-blue-500 border-blue-500 scale-110' 

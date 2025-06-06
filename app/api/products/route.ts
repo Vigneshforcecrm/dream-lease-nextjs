@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // First, get the access token from your Salesforce token API
     const tokenResponse = await fetch(`${request.nextUrl.origin}/api/salesforce/token`, {
       method: 'POST',
       headers: {

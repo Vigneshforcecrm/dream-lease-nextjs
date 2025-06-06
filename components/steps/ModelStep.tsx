@@ -8,14 +8,12 @@ export const ModelStep = () => {
   if (!productData) return null;
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Fallback image for vehicle
     e.currentTarget.src = "https://images.unsplash.com/photo-1563720223185-11003d516935?w=800&h=600&fit=crop";
   };
 
   return (
     <div>
       <div className="max-w-3xl mx-auto">
-        {/* Model Name Before Image */}
         <div className="text-center mb-6">
           <h3 className="text-3xl font-bold text-slate-900">{decode(productData.name)}</h3>
         </div>

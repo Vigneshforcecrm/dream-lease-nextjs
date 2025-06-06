@@ -11,7 +11,6 @@ export const PricingSidebar = () => {
 
   const monthlyPayment = Math.round(configuration.totalPrice / 36);
 
-  // Get selected component details
   const getSelectedComponentDetails = () => {
     if (!productData?.productComponentGroups) return [];
     

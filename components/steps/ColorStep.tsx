@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// Declare global types for Threekit
+// Declare Threekit ts
 declare global {
   interface Window {
     threekitPlayer: any;
@@ -12,7 +12,6 @@ declare global {
   }
 }
 
-// Comprehensive color mapping for automotive colors
 const getColorHex = (colorName: string): string => {
   const colorMap: { [key: string]: string } = {
     // White Variants
@@ -98,12 +97,10 @@ const getColorHex = (colorName: string): string => {
     'Default': '#94A3B8',
   };
   
-  // Try exact match first
   if (colorMap[colorName]) {
     return colorMap[colorName];
   }
-  
-  // Try partial matching for variations
+
   const normalizedName = colorName.toLowerCase();
   for (const [key, value] of Object.entries(colorMap)) {
     if (normalizedName.includes(key.toLowerCase()) || key.toLowerCase().includes(normalizedName)) {
@@ -114,7 +111,6 @@ const getColorHex = (colorName: string): string => {
   return colorMap['Default'];
 };
 
-// Helper function to get color price
 const getColorPrice = (colorName: string): number => {
   const whiteVariants = [
     'pearl white', 'pure white', 'solid white', 'arctic white', 
@@ -129,7 +125,6 @@ const getColorPrice = (colorName: string): number => {
   return isWhiteVariant ? 0 : 1000;
 };
 
-// Helper function to determine if color is light or dark for contrast
 const isLightColor = (hex: string): boolean => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -147,7 +142,6 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
   useEffect(() => {
     const loadThreekitScript = () => {
       return new Promise((resolve, reject) => {
-        // Check if script is already loaded
         if (window.threekitPlayer) {
           resolve(window.threekitPlayer);
           return;
@@ -170,7 +164,6 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
         await loadThreekitScript();
 
         if (playerRef.current && window.threekitPlayer) {
-          // Clear any existing player
           playerRef.current.innerHTML = '';
 
           const player = await window.threekitPlayer({
@@ -183,10 +176,8 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
             publishStage: "published",
             showConfigurator: false,
             showAR: true,
-            // CORS settings
             cors: {
               origin: "*",
-              credentials: true
             }
           });
 
@@ -203,7 +194,6 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
     initializePlayer();
   }, []);
 
-  // Update configuration when color changes
   useEffect(() => {
     const updateConfiguration = async () => {
       if (window.player && selectedColor) {
@@ -272,7 +262,6 @@ export const ColorStep = () => {
   }
 
   //const colors = colorAttributes.attributePickList.values;
-  // Sort colors by sequence value (ascending order)
   const colors = [...colorAttributes.attributePickList.values].sort((a, b) => {
     const seqA = a.sequence ?? Number.MAX_SAFE_INTEGER;
     const seqB = b.sequence ?? Number.MAX_SAFE_INTEGER;
@@ -295,7 +284,7 @@ export const ColorStep = () => {
         </p>
       </div>
 
-      {/* Threekit 3D Player */}
+      {/* Threekit Player */}
       <div className="w-full mb-8">
         <ThreekitPlayer selectedColor={selectedColor} />
       </div>

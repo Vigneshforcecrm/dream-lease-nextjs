@@ -25,9 +25,7 @@ export const InteriorStep = () => {
     );
   }
 
-  // Sort interior components by sequence value (ascending order)
   const sortedInteriorComponents = [...interiorGroup.components].sort((a, b) => {
-    // Handle cases where sequence might be undefined or null
     const seqA = a.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
     const seqB = b.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
     return seqA - seqB;
@@ -40,7 +38,6 @@ export const InteriorStep = () => {
   };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Fallback image for interior
     e.currentTarget.src = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop";
   };
 
@@ -53,7 +50,7 @@ export const InteriorStep = () => {
           {interiorGroup.description || 'Experience comfort meets luxury in every detail'}
         </p>
       </div>
-      
+
       {/* Interior Options Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {sortedInteriorComponents.map((interior) => {
