@@ -25,6 +25,14 @@ export const InteriorStep = () => {
     );
   }
 
+  // Sort interior components by sequence value (ascending order)
+  const sortedInteriorComponents = [...interiorGroup.components].sort((a, b) => {
+    // Handle cases where sequence might be undefined or null
+    const seqA = a.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    const seqB = b.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    return seqA - seqB;
+  });
+
   const selectedInteriorId = selectedComponents[interiorGroup.id];
 
   const handleInteriorSelect = (componentId: string) => {
@@ -45,10 +53,10 @@ export const InteriorStep = () => {
           {interiorGroup.description || 'Experience comfort meets luxury in every detail'}
         </p>
       </div>
-
+      
       {/* Interior Options Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {interiorGroup.components.map((interior) => {
+        {sortedInteriorComponents.map((interior) => {
           const isSelected = selectedInteriorId === interior.id;
           const price = interior.prices.find(p => p.isDefault)?.price || 0;
           const isIncluded = interior.productRelatedComponent?.doesBundlePriceIncludeChild;

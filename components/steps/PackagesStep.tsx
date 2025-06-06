@@ -25,6 +25,13 @@ export const PackagesStep = () => {
       </div>
     );
   }
+     // Sort package components by sequence value (ascending order)
+  const sortedPackageComponents = [...packageGroup.components].sort((a, b) => {
+    // Handle cases where sequence might be undefined or null
+    const seqA = a.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    const seqB = b.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    return seqA - seqB;
+  });
 
   const selectedPackageId = selectedComponents[packageGroup.id];
 
@@ -70,7 +77,7 @@ export const PackagesStep = () => {
 
       {/* Packages Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {packageGroup.components.map((pkg) => {
+        {sortedPackageComponents.map((pkg) => {
           const isSelected = selectedPackageId === pkg.id;
           const price = pkg.prices.find(p => p.isDefault)?.price || 0;
           const isIncluded = pkg.productRelatedComponent?.doesBundlePriceIncludeChild || price === 0;

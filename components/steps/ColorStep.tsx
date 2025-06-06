@@ -226,7 +226,7 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading 3D viewer...</p>
+            <p className="text-gray-600">Loading viewer...</p>
           </div>
         </div>
       )}
@@ -271,7 +271,14 @@ export const ColorStep = () => {
     );
   }
 
-  const colors = colorAttributes.attributePickList.values;
+  //const colors = colorAttributes.attributePickList.values;
+  // Sort colors by sequence value (ascending order)
+  const colors = [...colorAttributes.attributePickList.values].sort((a, b) => {
+    const seqA = a.sequence ?? Number.MAX_SAFE_INTEGER;
+    const seqB = b.sequence ?? Number.MAX_SAFE_INTEGER;
+    return seqA - seqB;
+  });
+
   const selectedColor = selectedAttributes['Colour'];
 
   const handleColorSelect = (colorCode: string) => {

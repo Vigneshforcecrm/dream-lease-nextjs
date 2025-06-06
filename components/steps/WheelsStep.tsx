@@ -40,7 +40,13 @@ export const WheelsStep = () => {
       </div>
     );
   }
-
+  // Sort wheel components by sequence value (ascending order)
+  const sortedWheelComponents = [...wheelsGroup.components].sort((a, b) => {
+    // Handle cases where sequence might be undefined or null
+    const seqA = a.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    const seqB = b.productRelatedComponent?.sequence ?? Number.MAX_SAFE_INTEGER;
+    return seqA - seqB;
+  });
   const selectedWheelId = selectedComponents[wheelsGroup.id];
 
   const handleWheelSelect = (componentId: string) => {
@@ -64,7 +70,7 @@ export const WheelsStep = () => {
 
       {/* Wheels Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {wheelsGroup.components.map((wheel) => {
+        {sortedWheelComponents.map((wheel) => {
           const isSelected = selectedWheelId === wheel.id;
           const price = wheel.prices.find(p => p.isDefault)?.price || 0;
           const isIncluded = wheel.productRelatedComponent?.doesBundlePriceIncludeChild;
