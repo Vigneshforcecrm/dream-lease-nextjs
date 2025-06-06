@@ -2,7 +2,15 @@ import { useConfiguration } from "@/contexts/ConfigurationContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
+// Declare Threekit types
+declare global {
+  interface Window {
+    threekitPlayer: any;
+    player: any;
+  }
+}
 // Comprehensive color mapping for automotive colors
 const getColorHex = (colorName: string): string => {
   const colorMap: { [key: string]: string } = {
@@ -131,6 +139,77 @@ const isLightColor = (hex: string): boolean => {
 export const ColorStep = () => {
   const { configuration, updateAttribute } = useConfiguration();
   const { productData, selectedAttributes } = configuration;
+  const playerRef = useRef<HTMLDivElement>(null);
+  const [threekitPlayer, setThreekitPlayer] = useState<any>(null);
+  const [isPlayerLoading, setIsPlayerLoading] = useState(true);
+
+    // Initialize Threekit Player
+    useEffect(() => {
+      const initializeThreekit = async () => {
+        if (!playerRef.current || threekitPlayer) return;
+  
+        try {
+          // Load Threekit script if not already loaded
+          if (!window.threekitPlayer) {
+            const script = document.createElement('script');
+            script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
+            script.async = true;
+            document.head.appendChild(script);
+            
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+            });
+          }
+  
+          // Initialize player
+          const player = await window.threekitPlayer({
+            authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
+            el: playerRef.current,
+            assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
+            initialConfiguration: {
+              // Set initial color if selected
+              ...(selectedAttributes['Colour'] && {
+                "Colour": selectedAttributes['Colour']
+              })
+            },
+            publishStage: "published",
+            showConfigurator: false, // Hide default configurator since we have our own UI
+            showAR: true,
+          });
+  
+          setThreekitPlayer(player);
+          window.player = player;
+          setIsPlayerLoading(false);
+        } catch (error) {
+          console.error('Failed to initialize Threekit player:', error);
+          setIsPlayerLoading(false);
+        }
+      };
+  
+      initializeThreekit();
+    }, [selectedAttributes]);
+  
+    // Update Threekit when color changes
+    useEffect(() => {
+      const updateThreekitColor = async () => {
+        if (!threekitPlayer || !selectedAttributes['Colour']) return;
+  
+        try {
+          // Get the configurator from the player
+          const configurator = await threekitPlayer.getConfigurator();
+          
+          // Update the color configuration
+          await configurator.setConfiguration({
+            Colour: selectedAttributes['Colour']
+          });
+        } catch (error) {
+          console.error('Failed to update Threekit color:', error);
+        }
+      };
+  
+      updateThreekitColor();
+    }, [selectedAttributes['Colour'], threekitPlayer]);
 
   // Find color attributes
   const colorAttributes = productData?.attributeCategories
@@ -166,109 +245,127 @@ export const ColorStep = () => {
         </p>
       </div>
 
-      {/* Color Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {colors.map((color) => {
-          const isDefault = color.code === colorAttributes.defaultValue;
-          const isSelected = selectedColor === color.code;
-          const colorHex = getColorHex(color.displayValue);
-          const isLight = isLightColor(colorHex);
-          const colorPrice = getColorPrice(color.displayValue);
-          const isIncluded = colorPrice === 0;
-          
-          return (
-            <Card
-              key={color.id}
-              className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden ${
-                isSelected 
-                  ? 'ring-2 ring-blue-500 shadow-2xl scale-105' 
-                  : 'hover:shadow-lg'
-              }`}
-              onClick={() => handleColorSelect(color.code)}
-            >
-              <CardContent className="p-6 relative">
-                {/* Default Badge */}
-                {isDefault && (
-                  <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xl z-10 border-2 border-white">
-                    Default
-                  </Badge>
-                )}
-                
-                {/* Color Swatch */}
-                <div className="relative mb-4">
-                  <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border-2 border-white group-hover:scale-105 transition-transform duration-300">
-                    <div
-                      className="w-full h-full relative"
-                      style={{ backgroundColor: colorHex }}
-                    >
-                      {/* Metallic/Pearl Effect Overlay */}
-                      {(color.displayValue.toLowerCase().includes('metallic') || 
-                        color.displayValue.toLowerCase().includes('pearl')) && (
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
-                      )}
-                      
-                      {/* Selection Indicator */}
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
-                            isLight ? 'bg-slate-900' : 'bg-white'
-                          }`}>
-                            <Check className={`w-6 h-6 ${isLight ? 'text-white' : 'text-slate-900'}`} />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Selection Ring */}
-                  {isSelected && (
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-30 blur-sm -z-10"></div>
-                  )}
+      {/* 3D Viewer Section - Top */}
+      <div className="mb-8">
+        <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 to-gray-100">
+          <CardContent className="p-0 relative">
+            {/* Loading State */}
+            {isPlayerLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
+                <div className="text-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-slate-600 font-medium">Loading 3D Preview...</p>
                 </div>
-                
-                {/* Color Info */}
-                <div className="text-center space-y-2">
-                  <h3 className="font-bold text-slate-900 text-sm leading-tight group-hover:text-slate-800 transition-colors duration-300">
-                    {color.displayValue}
-                  </h3>
-                  {/* Price and Status */}
-                  <div className="space-y-1">
-                    <div className="text-sm font-bold">
-                      {isIncluded ? (
-                        <span className="text-slate-700">Included</span>
-                      ) : (
-                        <span className="text-slate-900">+ £{colorPrice.toLocaleString()}</span>
+              </div>
+            )}
+            
+            {/* Threekit Player Container */}
+            <div 
+              ref={playerRef}
+              className="w-full aspect-video min-h-[500px] bg-slate-100 rounded-lg"
+              style={{ minHeight: '500px' }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Color Selection Section - Bottom */}
+      <div className="space-y-6">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Available Colors</h3>
+          <p className="text-slate-600">Click on any color to see it applied to your model above</p>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {colors.map((color) => {
+              const isDefault = color.code === colorAttributes.defaultValue;
+              const isSelected = selectedColor === color.code;
+              const colorHex = getColorHex(color.displayValue);
+              const isLight = isLightColor(colorHex);
+              const colorPrice = getColorPrice(color.displayValue);
+              const isIncluded = colorPrice === 0;
+              
+              return (
+                <Card
+                  key={color.id}
+                  className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden ${
+                    isSelected 
+                      ? 'ring-2 ring-blue-500 shadow-2xl scale-105' 
+                      : 'hover:shadow-lg'
+                  }`}
+                  onClick={() => handleColorSelect(color.code)}
+                >
+                  <CardContent className="p-6 relative">
+                    {/* Default Badge */}
+                    {isDefault && (
+                      <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-xl z-10 border-2 border-white">
+                        Default
+                      </Badge>
+                    )}
+                    
+                    {/* Color Swatch */}
+                    <div className="relative mb-3">
+                      <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border-2 border-white group-hover:scale-105 transition-transform duration-300">
+                        <div
+                          className="w-full h-full relative"
+                          style={{ backgroundColor: colorHex }}
+                        >
+                          {/* Metallic/Pearl Effect Overlay */}
+                          {(color.displayValue.toLowerCase().includes('metallic') || 
+                            color.displayValue.toLowerCase().includes('pearl')) && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
+                          )}
+                          
+                          {/* Selection Indicator */}
+                          {isSelected && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                                isLight ? 'bg-slate-900' : 'bg-white'
+                              }`}>
+                                <Check className={`w-6 h-6 ${isLight ? 'text-white' : 'text-slate-900'}`} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Selection Ring */}
+                      {isSelected && (
+                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-30 blur-sm -z-10"></div>
                       )}
                     </div>
                     
-                    <div className="flex items-center justify-center gap-2">
-                      {/* <div 
-                        className="w-3 h-3 rounded-full border border-slate-200 shadow-sm"
-                        style={{ backgroundColor: colorHex }}
-                      ></div> */}
-                      <span className="text-xs text-slate-500 font-medium">
-                        {isIncluded ? 'Included' : 'Available'}
-                      </span>
+                    {/* Color Info */}
+                    <div className="text-center space-y-2">
+                      <h3 className="font-bold text-slate-900 text-sm leading-tight group-hover:text-slate-800 transition-colors duration-300">
+                        {color.displayValue}
+                      </h3>
+                      {/* Price and Status */}
+                      <div className="space-y-1">
+                        <div className="text-sm font-bold">
+                          {isIncluded ? (
+                            <span className="text-slate-700">Included</span>
+                          ) : (
+                            <span className="text-slate-900">+ £{colorPrice.toLocaleString()}</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-xs text-slate-500 font-medium">
+                            {isIncluded ? 'Included' : 'Available'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  {/* <div className="flex items-center justify-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full border border-slate-200 shadow-sm"
-                      style={{ backgroundColor: colorHex }}
-                    ></div>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {isDefault ? 'Included' : 'Available'}
-                    </span>
-                  </div> */}
-                </div>
-                
-                {/* Hover Glow Effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    
+                    {/* Hover Glow Effect */}
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
     </div>
   );
 };
