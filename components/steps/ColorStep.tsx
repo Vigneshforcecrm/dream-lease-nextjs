@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-// Declare Threekit types
+// Declare global types for Threekit
 declare global {
   interface Window {
     threekitPlayer: any;
@@ -138,149 +138,121 @@ const isLightColor = (hex: string): boolean => {
   return brightness > 128;
 };
 
+// Threekit Player Component
+const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
+  const playerRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadThreekitScript = () => {
+      return new Promise((resolve, reject) => {
+        // Check if script is already loaded
+        if (window.threekitPlayer) {
+          resolve(window.threekitPlayer);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
+        script.crossOrigin = 'anonymous';
+        script.onload = () => resolve(window.threekitPlayer);
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    };
+
+    const initializePlayer = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        await loadThreekitScript();
+
+        if (playerRef.current && window.threekitPlayer) {
+          // Clear any existing player
+          playerRef.current.innerHTML = '';
+
+          const player = await window.threekitPlayer({
+            authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
+            el: playerRef.current,
+            assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
+            initialConfiguration: {
+              "Colour": selectedColor || "default",
+            },
+            publishStage: "published",
+            showConfigurator: false,
+            showAR: true,
+            // CORS settings
+            cors: {
+              origin: "*",
+              credentials: true
+            }
+          });
+
+          window.player = player;
+        }
+      } catch (err) {
+        console.error('Failed to initialize Threekit player:', err);
+        setError('Failed to load 3D viewer');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializePlayer();
+  }, []);
+
+  // Update configuration when color changes
+  useEffect(() => {
+    const updateConfiguration = async () => {
+      if (window.player && selectedColor) {
+        try {
+          await window.player.configurator.setConfiguration({
+            "Colour": selectedColor
+          });
+        } catch (err) {
+          console.error('Failed to update color configuration:', err);
+        }
+      }
+    };
+
+    updateConfiguration();
+  }, [selectedColor]);
+
+  return (
+    <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading 3D viewer...</p>
+          </div>
+        </div>
+      )}
+      
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-red-50 z-10">
+          <div className="text-center">
+            <p className="text-red-600 mb-2">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div ref={playerRef} className="w-full h-full" />
+    </div>
+  );
+};
+
 export const ColorStep = () => {
   const { configuration, updateAttribute } = useConfiguration();
   const { productData, selectedAttributes } = configuration;
-  const playerRef = useRef<HTMLDivElement>(null);
-  const [threekitPlayer, setThreekitPlayer] = useState<any>(null);
-  const [isPlayerLoading, setIsPlayerLoading] = useState(true);
-  const [playerError, setPlayerError] = useState<string | null>(null);
-
-  // Initialize Threekit Player with enhanced error handling
-  useEffect(() => {
-    const initializeThreekit = async () => {
-      if (!playerRef.current || threekitPlayer) return;
-
-      try {
-        setIsPlayerLoading(true);
-        setPlayerError(null);
-
-        // Load Threekit script if not already loaded
-        if (!window.threekitPlayer) {
-          const script = document.createElement('script');
-          script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
-          script.async = true;
-          script.crossOrigin = 'anonymous'; // Add crossorigin attribute
-          document.head.appendChild(script);
-          
-          await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = () => reject(new Error('Failed to load Threekit script'));
-            
-            // Add timeout to prevent hanging
-            setTimeout(() => reject(new Error('Script loading timeout')), 30000);
-          });
-        }
-
-        // Wait a bit for the script to fully initialize
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Enhanced player configuration
-        const playerConfig = {
-          authToken: "3af4efa4-661d-41e9-a735-af5ec75d2646",
-          el: playerRef.current,
-          assetId: "8da8ac75-ba4e-4d06-aa3a-7d2aa1b85191",
-          initialConfiguration: {
-            // Set initial color if selected
-            ...(selectedAttributes['Colour'] && {
-              "Colour": selectedAttributes['Colour']
-            })
-          },
-          publishStage: "published",
-          showConfigurator: false,
-          showAR: true,
-          // Add CORS and error handling options
-          cache: false,
-          enableApi: true,
-          // Add retry logic
-          onError: (error: any) => {
-            console.error('Threekit player error:', error);
-            setPlayerError(`Player initialization failed: ${error.message || 'Unknown error'}`);
-          }
-        };
-
-        console.log('Initializing Threekit player with config:', playerConfig);
-        
-        // Initialize player with retry logic
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-          try {
-            const player = await window.threekitPlayer(playerConfig);
-            
-            if (player) {
-              setThreekitPlayer(player);
-              window.player = player;
-              setIsPlayerLoading(false);
-              setPlayerError(null);
-              console.log('Threekit player initialized successfully');
-              return;
-            }
-          } catch (error: any) {
-            retryCount++;
-            console.warn(`Threekit initialization attempt ${retryCount} failed:`, error);
-            
-            if (retryCount < maxRetries) {
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
-            } else {
-              throw error;
-            }
-          }
-        }
-
-      } catch (error: any) {
-        console.error('Failed to initialize Threekit player:', error);
-        setPlayerError(error.message || 'Failed to initialize 3D viewer');
-        setIsPlayerLoading(false);
-      }
-    };
-
-    initializeThreekit();
-  }, []); // Remove selectedAttributes dependency to prevent re-initialization
-
-  // Update Threekit when color changes (separate effect)
-  useEffect(() => {
-    const updateThreekitColor = async () => {
-      if (!threekitPlayer || !selectedAttributes['Colour']) return;
-
-      try {
-        console.log('Updating Threekit color to:', selectedAttributes['Colour']);
-        
-        // Method 1: Try direct configuration update
-        if (threekitPlayer.setConfiguration) {
-          await threekitPlayer.setConfiguration({
-            Colour: selectedAttributes['Colour']
-          });
-        }
-        // Method 2: Try configurator approach
-        else if (threekitPlayer.getConfigurator) {
-          const configurator = await threekitPlayer.getConfigurator();
-          if (configurator && configurator.setConfiguration) {
-            await configurator.setConfiguration({
-              Colour: selectedAttributes['Colour']
-            });
-          }
-        }
-        // Method 3: Try attribute update
-        else if (threekitPlayer.setAttributes) {
-          await threekitPlayer.setAttributes({
-            Colour: selectedAttributes['Colour']
-          });
-        }
-        
-        console.log('Threekit color updated successfully');
-      } catch (error) {
-        console.error('Failed to update Threekit color:', error);
-        // Don't show error to user for color updates, just log it
-      }
-    };
-
-    // Add a small delay to ensure player is ready
-    const timeoutId = setTimeout(updateThreekitColor, 500);
-    return () => clearTimeout(timeoutId);
-  }, [selectedAttributes['Colour'], threekitPlayer]);
 
   // Find color attributes
   const colorAttributes = productData?.attributeCategories
@@ -316,161 +288,100 @@ export const ColorStep = () => {
         </p>
       </div>
 
-      {/* 3D Viewer Section - Top */}
-      <div className="mb-8">
-        <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-slate-50 to-gray-100">
-          <CardContent className="p-0 relative">
-            {/* Loading State */}
-            {isPlayerLoading && !playerError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
-                <div className="text-center space-y-4">
-                  <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-slate-600 font-medium">Loading 3D Preview...</p>
-                  <p className="text-xs text-slate-500">This may take a moment</p>
-                </div>
-              </div>
-            )}
-
-            {/* Error State */}
-            {playerError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
-                <div className="text-center space-y-4 p-6">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                    <div className="w-8 h-8 text-red-500">⚠️</div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">3D Viewer Unavailable</h3>
-                    <p className="text-sm text-slate-600 mb-4">
-                      The 3D preview is temporarily unavailable. You can still select colors below.
-                    </p>
-                    <p className="text-xs text-slate-500">{playerError}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPlayerError(null);
-                      setIsPlayerLoading(true);
-                      // Trigger re-initialization
-                      window.location.reload();
-                    }}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {/* Threekit Player Container */}
-            <div 
-              ref={playerRef}
-              className="w-full aspect-video min-h-[500px] bg-slate-100 rounded-lg"
-              style={{ minHeight: '500px' }}
-            />
-          </CardContent>
-        </Card>
+      {/* Threekit 3D Player */}
+      <div className="w-full mb-8">
+        <ThreekitPlayer selectedColor={selectedColor} />
       </div>
 
-      {/* Color Selection Section - Bottom */}
-      <div className="space-y-6">
-        <div className="text-center">
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Available Colors</h3>
-          <p className="text-slate-600">
-            {playerError 
-              ? "Select your preferred color - the 3D preview will update when available"
-              : "Click on any color to see it applied to your model above"
-            }
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {colors.map((color) => {
-            const isDefault = color.code === colorAttributes.defaultValue;
-            const isSelected = selectedColor === color.code;
-            const colorHex = getColorHex(color.displayValue);
-            const isLight = isLightColor(colorHex);
-            const colorPrice = getColorPrice(color.displayValue);
-            const isIncluded = colorPrice === 0;
-            
-            return (
-              <Card
-                key={color.id}
-                className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden ${
-                  isSelected 
-                    ? 'ring-2 ring-blue-500 shadow-2xl scale-105' 
-                    : 'hover:shadow-lg'
-                }`}
-                onClick={() => handleColorSelect(color.code)}
-              >
-                <CardContent className="p-6 relative">
-                  {/* Default Badge */}
-                  {isDefault && (
-                    <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-xl z-10 border-2 border-white">
-                      Default
-                    </Badge>
-                  )}
-                  
-                  {/* Color Swatch */}
-                  <div className="relative mb-3">
-                    <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border-2 border-white group-hover:scale-105 transition-transform duration-300">
-                      <div
-                        className="w-full h-full relative"
-                        style={{ backgroundColor: colorHex }}
-                      >
-                        {/* Metallic/Pearl Effect Overlay */}
-                        {(color.displayValue.toLowerCase().includes('metallic') || 
-                          color.displayValue.toLowerCase().includes('pearl')) && (
-                          <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
-                        )}
-                        
-                        {/* Selection Indicator */}
-                        {isSelected && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
-                              isLight ? 'bg-slate-900' : 'bg-white'
-                            }`}>
-                              <Check className={`w-6 h-6 ${isLight ? 'text-white' : 'text-slate-900'}`} />
-                            </div>
+      {/* Color Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {colors.map((color) => {
+          const isDefault = color.code === colorAttributes.defaultValue;
+          const isSelected = selectedColor === color.code;
+          const colorHex = getColorHex(color.displayValue);
+          const isLight = isLightColor(colorHex);
+          const colorPrice = getColorPrice(color.displayValue);
+          const isIncluded = colorPrice === 0;
+          
+          return (
+            <Card
+              key={color.id}
+              className={`group cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-0 bg-white/80 backdrop-blur-sm overflow-hidden ${
+                isSelected 
+                  ? 'ring-2 ring-blue-500 shadow-2xl scale-105' 
+                  : 'hover:shadow-lg'
+              }`}
+              onClick={() => handleColorSelect(color.code)}
+            >
+              <CardContent className="p-6 relative">
+                {/* Default Badge */}
+                {isDefault && (
+                  <Badge className="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xl z-10 border-2 border-white">
+                    Default
+                  </Badge>
+                )}
+                
+                {/* Color Swatch */}
+                <div className="relative mb-4">
+                  <div className="aspect-square rounded-2xl overflow-hidden shadow-lg border-2 border-white group-hover:scale-105 transition-transform duration-300">
+                    <div
+                      className="w-full h-full relative"
+                      style={{ backgroundColor: colorHex }}
+                    >
+                      {/* Metallic/Pearl Effect Overlay */}
+                      {(color.displayValue.toLowerCase().includes('metallic') || 
+                        color.displayValue.toLowerCase().includes('pearl')) && (
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"></div>
+                      )}
+                      
+                      {/* Selection Indicator */}
+                      {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                            isLight ? 'bg-slate-900' : 'bg-white'
+                          }`}>
+                            <Check className={`w-6 h-6 ${isLight ? 'text-white' : 'text-slate-900'}`} />
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Selection Ring */}
+                  {isSelected && (
+                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-30 blur-sm -z-10"></div>
+                  )}
+                </div>
+                
+                {/* Color Info */}
+                <div className="text-center space-y-2">
+                  <h3 className="font-bold text-slate-900 text-sm leading-tight group-hover:text-slate-800 transition-colors duration-300">
+                    {color.displayValue}
+                  </h3>
+                  {/* Price and Status */}
+                  <div className="space-y-1">
+                    <div className="text-sm font-bold">
+                      {isIncluded ? (
+                        <span className="text-slate-700">Included</span>
+                      ) : (
+                        <span className="text-slate-900">+ £{colorPrice.toLocaleString()}</span>
+                      )}
                     </div>
                     
-                    {/* Selection Ring */}
-                    {isSelected && (
-                      <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 opacity-30 blur-sm -z-10"></div>
-                    )}
-                  </div>
-                  
-                  {/* Color Info */}
-                  <div className="text-center space-y-2">
-                    <h3 className="font-bold text-slate-900 text-sm leading-tight group-hover:text-slate-800 transition-colors duration-300">
-                      {color.displayValue}
-                    </h3>
-                    {/* Price and Status */}
-                    <div className="space-y-1">
-                      <div className="text-sm font-bold">
-                        {isIncluded ? (
-                          <span className="text-slate-700">Included</span>
-                        ) : (
-                          <span className="text-slate-900">+ £{colorPrice.toLocaleString()}</span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs text-slate-500 font-medium">
-                          {isIncluded ? 'Included' : 'Available'}
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xs text-slate-500 font-medium">
+                        {isIncluded ? 'Included' : 'Available'}
+                      </span>
                     </div>
                   </div>
-                  
-                  {/* Hover Glow Effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </div>
+                
+                {/* Hover Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
