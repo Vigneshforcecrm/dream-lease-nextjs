@@ -194,7 +194,7 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
         }
       } catch (err) {
         console.error('Failed to initialize Threekit player:', err);
-        setError('Failed to load 3D viewer');
+        setError('Failed to load');
       } finally {
         setIsLoading(false);
       }
