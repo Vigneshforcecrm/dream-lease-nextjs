@@ -149,7 +149,7 @@ const ThreekitPlayer = ({ selectedColor }: { selectedColor?: string }) => {
 
         const script = document.createElement('script');
         script.src = 'https://preview.threekit.com/app/js/threekit-player.js';
-        script.crossOrigin = 'anonymous';
+        script.crossOrigin = '*';
         script.onload = () => resolve(window.threekitPlayer);
         script.onerror = reject;
         document.head.appendChild(script);
